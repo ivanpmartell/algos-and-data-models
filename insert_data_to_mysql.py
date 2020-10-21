@@ -32,26 +32,27 @@ create_columns = {
 
 def insert_Venues(values):
     valid_category = values[3].replace("\'", "\'\'")
-    string_values = f"{int(values[0],16)},POINT({values[1]},{values[2]}),\"{valid_category}\",\"{values[4]}\""
+    string_values = f"({int(values[0],16)},POINT({values[1]},{values[2]}),'{valid_category}','{values[4]}')"
     return string_values
 
-def get_columns_Venues():
+def start_insert_Venues():
     cols = "id,latlon,category,countryCode"
-    return cols
+    query = f"INSERT INTO Venues (" + cols + ") VALUES"
+    return query
 
 def insert_Checkins(values):
     _, date_time_month, date_time_day, date_time_time, _, date_time_year = values[3].split(' ')
-    string_values = f"{values[0]},{int(values[1],16)},{date_time_year}-{abbr_to_num[date_time_month]}-{date_time_day} {date_time_time},{values[4]}"
+    string_values = f"({values[0]},{int(values[1],16)},{date_time_year}-{abbr_to_num[date_time_month]}-{date_time_day} {date_time_time},{values[4]})"
     return string_values
 
-def get_columns_Checkins():
+def start_insert_Checkins():
     cols = "userId,venueId,utcTime,utcOffset"
-    return cols
+    query = f"INSERT INTO Checkins ({cols}) VALUES"
+    return query
 
 
 table_name = sys.argv[1]
 file_path = files[table_name]
-out_file = "data/{table_name}.csv"
 cursor = mysqldb_connection.cursor()
 create_table_query = f"CREATE TABLE {table_name} (" + ','.join(create_columns[table_name]) + ");"
 try:
@@ -59,19 +60,28 @@ try:
 except ProgrammingError as e:
     print("Warning: " + e.msg)
 cursor.close()
-with open(out_file, 'a') as out_file:
-    with open(file_path, 'r') as read_file:
-        for i, line in enumerate(read_file):
-            if i > 99999:
-                break
-            values = line.rstrip().split('\t')
-            out_file.write(locals()[f"insert_{table_name}"](values) +"\n")
-
-query = f"LOAD DATA INFILE {out_file} INTO TABLE {table_name} " +\
-"""FIELDS TERMINATED BY ',' ENCLOSED BY '"'
-LINES TERMINATED BY '\n'"""
-
-cursor = mysqldb_connection.cursor()
-cursor.execute(query)
-mysqldb_connection.commit()
-cursor.close()
+with open(file_path, 'r') as read_file:
+    insert_query = locals()[f"start_insert_{table_name}"]()
+    insert_strings = []
+    for line in read_file:
+        values = line.rstrip().split('\t')
+        insert_strings.append(locals()[f"insert_{table_name}"](values))
+        if len(insert_strings) > 199999:
+            cursor = mysqldb_connection.cursor()
+            try:
+                cursor.execute(insert_query + ','.join(insert_strings) + ";")
+                #mysqldb_connection.commit()
+                print(cursor.rowcount, "rows were inserted.")
+            except mysqldb.DatabaseError:
+                raise Exception("Too many inserts. Please lower the amount of values to be inserted.")
+            except ProgrammingError as e:
+                print("Error: " + e.msg + ". Rolling back...")
+                mysqldb_connection.rollback()
+            cursor.close()
+            insert_strings = []
+    if len(insert_strings) > 0:
+        cursor = mysqldb_connection.cursor()
+        cursor.execute(insert_query + ','.join(insert_strings) + ";")
+        print(cursor.rowcount, "rows were inserted.")
+        cursor.close()
+    mysqldb_connection.commit()
