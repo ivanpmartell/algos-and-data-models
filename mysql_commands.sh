@@ -11,3 +11,4 @@ CREATE USER 'ivan'@'localhost' IDENTIFIED BY 'CSC501@ssignments';
 CREATE DATABASE assignment1;
 USE assignment1;
 GRANT ALL PRIVILEGES ON `assignment1`.* TO ivan@localhost;
+GRANT FILE ON *.* TO ivan@localhost;

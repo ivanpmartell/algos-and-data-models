@@ -1,3 +1,4 @@
+import os
 import sys
 import calendar
 import mysql.connector as mysqldb
@@ -40,8 +41,8 @@ def get_columns_Venues():
     return cols
 
 def insert_Checkins(values):
-    _, date_time_month, date_time_day, date_time_time, _, date_time_year = values[3].split(' ')
-    string_values = f"{values[0]},{int(values[1],16)},{date_time_year}-{abbr_to_num[date_time_month]}-{date_time_day} {date_time_time},{values[4]}"
+    _, date_time_month, date_time_day, date_time_time, _, date_time_year = values[2].split(' ')
+    string_values = f"{values[0]},{int(values[1],16)},{date_time_year}-{str(abbr_to_num[date_time_month]).zfill(2)}-{date_time_day} {date_time_time},{values[3]}"
     return string_values
 
 def get_columns_Checkins():
@@ -51,7 +52,7 @@ def get_columns_Checkins():
 
 table_name = sys.argv[1]
 file_path = files[table_name]
-out_file = "data/{table_name}.csv"
+out_path = f"data/{table_name}.csv"
 cursor = mysqldb_connection.cursor()
 create_table_query = f"CREATE TABLE {table_name} (" + ','.join(create_columns[table_name]) + ");"
 try:
@@ -59,7 +60,7 @@ try:
 except ProgrammingError as e:
     print("Warning: " + e.msg)
 cursor.close()
-with open(out_file, 'a') as out_file:
+with open(out_path, 'a') as out_file:
     with open(file_path, 'r') as read_file:
         for i, line in enumerate(read_file):
             if i > 99999:
@@ -67,9 +68,17 @@ with open(out_file, 'a') as out_file:
             values = line.rstrip().split('\t')
             out_file.write(locals()[f"insert_{table_name}"](values) +"\n")
 
-query = f"LOAD DATA INFILE {out_file} INTO TABLE {table_name} " +\
-"""FIELDS TERMINATED BY ',' ENCLOSED BY '"'
-LINES TERMINATED BY '\n'"""
+cursor = mysqldb_connection.cursor()
+cursor.execute("show variables like 'secure_file_priv';")
+mysql_file_path = cursor.fetchone()[1]
+cursor.close()
+print(f"Please move the created file '{out_path}' to {mysql_file_path}")
+print(f"Command: sudo cp {out_path} {mysql_file_path}{table_name}.csv")
+input("Press enter to continue...")
+
+columns = locals()[f"get_columns_{table_name}"]()
+query = f"LOAD DATA INFILE '{mysql_file_path}{table_name}.csv' INTO TABLE {table_name} " +\
+r"""FIELDS TERMINATED BY ',' ENCLOSED BY '"'""" + f"LINES TERMINATED BY '\\n' ({columns})"
 
 cursor = mysqldb_connection.cursor()
 cursor.execute(query)
