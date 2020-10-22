@@ -17,7 +17,7 @@ create_columns = {"Countries": ["code CHAR(2) NOT NULL",
                              "isProvincialCapital BOOLEAN DEFAULT FALSE",
                              "isEnclave BOOLEAN DEFAULT FALSE",
                              "PRIMARY KEY (id)",
-                             "FOREIGN KEY (countryCode) REFERENCES Countries(code)",
+                             "CONSTRAINT fk_country FOREIGN KEY (countryCode) REFERENCES Countries(code)",
                              "SPATIAL INDEX(latlon)"]}
 
 # Selected spatial point as data for lat lon because the indices make use of r-trees 

@@ -11,21 +11,18 @@ files = {"Venues": "data/dataset_TIST2015_POIs.txt",
          "Checkins": "data/dataset_TIST2015_Checkins.txt"}
 
 create_columns = {
-            "Venues": ["id BINARY(96) PRIMARY KEY", #int('hexId', 16)
+            "Venues": ["id BINARY(96)", #int('hexId', 16)
                        "latlon POINT NOT NULL",
                        "category VARCHAR(50) NOT NULL",
                        "countryCode CHAR(2) NOT NULL",
                        "assignedCity SMALLINT UNSIGNED",
-                       "FOREIGN KEY (countryCode) REFERENCES Countries(code)",
-                       "FOREIGN KEY (assignedCity) REFERENCES Cities(id)",
-                       "SPATIAL INDEX(latlon)"],
+                       "PRIMARY KEY (id)"],
             "Checkins": ["id INT UNSIGNED NOT NULL AUTO_INCREMENT",
                         "userId MEDIUMINT UNSIGNED NOT NULL",
                         "venueId BINARY(96) NOT NULL",
                         "utcTime DATETIME NOT NULL",
                         "utcOffset SMALLINT NOT NULL",
-                        "PRIMARY KEY (id)",
-                        "FOREIGN KEY (venueId) REFERENCES Venues(id)"]}
+                        "PRIMARY KEY (id)"]}
 
 # Selected spatial point as data for lat lon because the indices make use of r-trees 
 # Using INT(4), which amounts to 4 bytes=32 bits, as largest id will be 33,278,683 which uses 25 bits
@@ -40,6 +37,11 @@ def start_insert_Venues():
     query = f"INSERT INTO Venues (" + cols + ") VALUES"
     return query
 
+def post_insert_Venues():
+    return """ALTER TABLE Venues ADD CONSTRAINT fk_country FOREIGN KEY (countryCode) REFERENCES Countries(code);
+            ALTER TABLE Venues ADD CONSTRAINT fk_city FOREIGN KEY (assignedCity) REFERENCES Cities(id);
+            ALTER TABLE Venues ADD SPATIAL INDEX(latlon);"""
+
 def insert_Checkins(values):
     _, date_time_month, date_time_day, date_time_time, _, date_time_year = values[3].split(' ')
     string_values = f"({values[0]},{int(values[1],16)},{date_time_year}-{abbr_to_num[date_time_month]}-{date_time_day} {date_time_time},{values[4]})"
@@ -49,6 +51,9 @@ def start_insert_Checkins():
     cols = "userId,venueId,utcTime,utcOffset"
     query = f"INSERT INTO Checkins ({cols}) VALUES"
     return query
+
+def post_insert_Checkins():
+    return "ALTER TABLE Checkins ADD CONSTRAINT fk_venue FOREIGN KEY (venueId) REFERENCES Venues(id);"
 
 
 table_name = sys.argv[1]
@@ -85,3 +90,7 @@ with open(file_path, 'r') as read_file:
         print(cursor.rowcount, "rows were inserted.")
         cursor.close()
     mysqldb_connection.commit()
+
+cursor = mysqldb_connection.cursor()
+cursor.execute(locals()[f"post_insert_{table_name}"]())
+cursor.close()

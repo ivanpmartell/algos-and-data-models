@@ -11,21 +11,18 @@ files = {"Venues": "data/dataset_TIST2015_POIs.txt",
          "Checkins": "data/dataset_TIST2015_Checkins.txt"}
 
 create_columns = {
-            "Venues": ["id BINARY(96) PRIMARY KEY", #int('hexId', 16)
+            "Venues": ["id BINARY(96)", #int('hexId', 16)
                        "latlon POINT NOT NULL",
                        "category VARCHAR(50) NOT NULL",
                        "countryCode CHAR(2) NOT NULL",
                        "assignedCity SMALLINT UNSIGNED",
-                       "FOREIGN KEY (countryCode) REFERENCES Countries(code)",
-                       "FOREIGN KEY (assignedCity) REFERENCES Cities(id)",
-                       "SPATIAL INDEX(latlon)"],
+                       "PRIMARY KEY (id)"],
             "Checkins": ["id INT UNSIGNED NOT NULL AUTO_INCREMENT",
                         "userId MEDIUMINT UNSIGNED NOT NULL",
                         "venueId BINARY(96) NOT NULL",
                         "utcTime DATETIME NOT NULL",
                         "utcOffset SMALLINT NOT NULL",
-                        "PRIMARY KEY (id)",
-                        "FOREIGN KEY (venueId) REFERENCES Venues(id)"]}
+                        "PRIMARY KEY (id)"]}
 
 # Selected spatial point as data for lat lon because the indices make use of r-trees 
 # Using INT(4), which amounts to 4 bytes=32 bits, as largest id will be 33,278,683 which uses 25 bits
@@ -48,6 +45,14 @@ def get_columns_Checkins():
     cols = "userId,venueId,utcTime,utcOffset"
     return cols
 
+def post_insert_Venues():
+    #ALTER TABLE Venues ADD FOREIGN KEY (assignedCity) REFERENCES Cities(id);
+    return """ALTER TABLE Venues ADD CONSTRAINT fk_country FOREIGN KEY (countryCode) REFERENCES Countries(code);
+            ALTER TABLE Venues ADD SPATIAL INDEX(latlon);"""
+
+def post_insert_Checkins():
+    return "ALTER TABLE Checkins ADD FOREIGN KEY (venueId) REFERENCES Venues(id);"
+
 
 table_name = sys.argv[1]
 file_path = files[table_name]
@@ -59,6 +64,7 @@ try:
 except ProgrammingError as e:
     print("Warning: " + e.msg)
 cursor.close()
+print("Creating file...")
 with open(out_file, 'a') as out_file:
     with open(file_path, 'r') as read_file:
         for i, line in enumerate(read_file):
@@ -70,8 +76,11 @@ with open(out_file, 'a') as out_file:
 query = f"LOAD DATA INFILE {out_file} INTO TABLE {table_name} " +\
 """FIELDS TERMINATED BY ',' ENCLOSED BY '"'
 LINES TERMINATED BY '\n'"""
-
+print("Running query...")
 cursor = mysqldb_connection.cursor()
 cursor.execute(query)
 mysqldb_connection.commit()
+cursor.close()
+cursor = mysqldb_connection.cursor()
+cursor.execute(locals()[f"post_insert_{table_name}"]())
 cursor.close()
