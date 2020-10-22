@@ -38,9 +38,9 @@ def start_insert_Venues():
     return query
 
 def post_insert_Venues():
-    return """ALTER TABLE Venues ADD CONSTRAINT fk_country FOREIGN KEY (countryCode) REFERENCES Countries(code);
-            ALTER TABLE Venues ADD CONSTRAINT fk_city FOREIGN KEY (assignedCity) REFERENCES Cities(id);
-            ALTER TABLE Venues ADD SPATIAL INDEX(latlon);"""
+    #ALTER TABLE Venues ADD CONSTRAINT fk_city FOREIGN KEY (assignedCity) REFERENCES Cities(id);
+    return ["ALTER TABLE Venues ADD CONSTRAINT fk_country FOREIGN KEY (countryCode) REFERENCES Countries(code);",
+            "ALTER TABLE Venues ADD SPATIAL INDEX(latlon);"]
 
 def insert_Checkins(values):
     _, date_time_month, date_time_day, date_time_time, _, date_time_year = values[3].split(' ')
@@ -53,7 +53,7 @@ def start_insert_Checkins():
     return query
 
 def post_insert_Checkins():
-    return "ALTER TABLE Checkins ADD CONSTRAINT fk_venue FOREIGN KEY (venueId) REFERENCES Venues(id);"
+    return ["ALTER TABLE Checkins ADD CONSTRAINT fk_venue FOREIGN KEY (venueId) REFERENCES Venues(id);"]
 
 
 table_name = sys.argv[1]
@@ -92,5 +92,7 @@ with open(file_path, 'r') as read_file:
     mysqldb_connection.commit()
 
 cursor = mysqldb_connection.cursor()
-cursor.execute(locals()[f"post_insert_{table_name}"]())
+for post_query in locals()[f"post_insert_{table_name}"]():
+    print("Running query: %s" % post_query)
+    cursor.execute(post_query)
 cursor.close()

@@ -10,6 +10,7 @@ sudo mysql
 CREATE USER 'ivan'@'localhost' IDENTIFIED BY 'CSC501@ssignments';
 CREATE DATABASE assignment1;
 USE assignment1;
+GRANT FILE ON *.* TO ivan@localhost;
 GRANT ALL PRIVILEGES ON `assignment1`.* TO ivan@localhost;
 GRANT ALL PRIVILEGES ON `assignment1`.* TO ivan@'%' IDENTIFIED BY 'CSC501@ssignments';
 # Remote access
