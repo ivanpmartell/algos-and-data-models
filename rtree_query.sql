@@ -26,3 +26,7 @@ END;
 ;;
 DELIMITER ;
 CALL AssignCities();
+
+SELECT Count(id) FROM Venues WHERE assignedCity IS NOT NULL;
+select routine_name from information_schema.routines where routine_type = 'PROCEDURE';
+
