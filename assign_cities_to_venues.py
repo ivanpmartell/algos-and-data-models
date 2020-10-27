@@ -1,5 +1,6 @@
 import mysql.connector as mysqldb
 import collections
+from tqdm import tqdm
 
 mysqldb_connection = mysqldb.connect(host='localhost', user='ivan', password='CSC501@ssignments', database='assignment1')
 
@@ -57,7 +58,7 @@ def create_call_test_proc(distance):
     for result in cursor.stored_results():
         venue_ids.extend(map(strip_nullbytes, result.fetchall()))
     cursor.close()
-    return [item for item, count in collections.Counter(venue_ids).items() if count > 1]
+    return [item for item, count in collections.Counter(venue_ids).items() if count > 1], len(venue_ids)
 
 def create_call_assign_proc(distance):
     cursor_drop_assign_proc = mysqldb_connection.cursor()
@@ -74,6 +75,7 @@ def create_call_assign_proc(distance):
     mysqldb_connection.commit()
     cursor.close()
 
+granularity = 0.1
 with open("data/sorted_distances.txt", 'r') as distances_file:
     for value in distances_file:
         distance = float(value.rstrip())
@@ -86,8 +88,13 @@ with open("data/sorted_distances.txt", 'r') as distances_file:
         duplicate_venues = [hex(1)]
         i = 0
         while (len(duplicate_venues) > 0):
-            dist = distance/(2 + 0.1*i)
-            duplicate_venues = create_call_test_proc(dist)
+            dist = distance/(2 + (granularity*i))
+            duplicate_venues, amount_of_venues = create_call_test_proc(dist)
             i += 1
-        create_call_assign_proc(dist)
+        if amount_of_venues > 0:
+            granularity *= 2
+            create_call_assign_proc(dist)
+        else:
+            granularity /= 2
+            
     mysqldb_connection.close()
