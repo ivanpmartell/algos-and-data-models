@@ -75,9 +75,14 @@ def create_call_assign_proc(distance):
     mysqldb_connection.commit()
     cursor.close()
 
+lines_in_file = 0
+with open("data/sorted_distances.txt", 'r') as distances_file:
+    for line in distances_file:
+        lines_in_file += 1
 granularity = 0.1
 with open("data/sorted_distances.txt", 'r') as distances_file:
-    for value in distances_file:
+    for line in tqdm(range(lines_in_file)):
+        value = next(distances_file)
         distance = float(value.rstrip())
         cursor_null = mysqldb_connection.cursor()
         cursor_null.execute(has_null_query)
@@ -94,7 +99,8 @@ with open("data/sorted_distances.txt", 'r') as distances_file:
         if amount_of_venues > 0:
             granularity *= 2
             create_call_assign_proc(dist)
+            print(f"{amount_of_venues} have been assigned to a city")
         else:
+            print("Ambiguous city for venues. Changing granularity")
             granularity /= 2
-            
     mysqldb_connection.close()
