@@ -96,7 +96,12 @@ with open("data/sorted_distances.txt", 'r') as distances_file:
         while (len(duplicate_venues) > 0):
             dist = distance/(2 + (granularity*i))
             duplicate_venues, amount_of_venues = create_call_test_proc(dist)
+            print(f"Step {i}")
+            print(f"{len(duplicate_venues)} ambiguous venue's cities left")
+            print(f"{amount_of_venues} venues within latlon distance: {dist}")
             if amount_of_venues == 0:
+                if i == 0:
+                    break
                 granularity /= 2
                 print(f"Ambiguous city for venues. Changing granularity to {granularity}. Retries left: {retries}")
                 duplicate_venues = [hex(1)]*retries
