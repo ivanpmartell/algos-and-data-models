@@ -71,12 +71,8 @@ def create_call_assign_proc(distance):
 
     cursor = mysqldb_connection.cursor()
     cursor.callproc("AssignCities")
-    #mysqldb_connection.commit()
-    venue_ids = []
-    for result in cursor.stored_results():
-        venue_ids.extend(map(strip_nullbytes, result.fetchall()))
+    mysqldb_connection.commit()
     cursor.close()
-    return [item for item, count in collections.Counter(venue_ids).items() if count > 1]
 
 with open("data/sorted_distances.txt", 'r') as distances_file:
     for value in distances_file:
