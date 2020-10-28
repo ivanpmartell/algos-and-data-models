@@ -1,6 +1,5 @@
 import mysql.connector as mysqldb
 import collections
-from tqdm import tqdm
 
 mysqldb_connection = mysqldb.connect(host='localhost', user='ivan', password='CSC501@ssignments', database='assignment1')
 
@@ -86,7 +85,7 @@ distances_stack = []
 with open("data/sorted_distances.txt", 'r') as distances_file:
     for line in distances_file:
         distances_stack.append(float(line.rstrip()))
-    #distances_stack.append(float(0))
+    distances_stack.append(float(0))
 
 i = 1
 while (True):

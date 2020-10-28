@@ -3,6 +3,7 @@ import sys
 import calendar
 import mysql.connector as mysqldb
 from mysql.connector import ProgrammingError
+from datetime import datetime, timedelta
 
 mysqldb_connection = mysqldb.connect(host='localhost', user='ivan', password='CSC501@ssignments', database='assignment1')
 
@@ -23,6 +24,7 @@ create_columns = {
                         "venueId BINARY(96) NOT NULL",
                         "utcTime DATETIME NOT NULL",
                         "utcOffset SMALLINT NOT NULL",
+                        "localDatetime DATETIME NOT NULL",
                         "PRIMARY KEY (id)"]}
 
 # Selected spatial point as data for lat lon because the indices make use of r-trees 
@@ -39,11 +41,16 @@ def get_columns_Venues():
 
 def insert_Checkins(values):
     _, date_time_month, date_time_day, date_time_time, _, date_time_year = values[2].split(' ')
-    string_values = f"{values[0]},{int(values[1],16)},{date_time_year}-{str(abbr_to_num[date_time_month]).zfill(2)}-{date_time_day} {date_time_time},{values[3]}"
+    date_time_string = f"{date_time_year}-{str(abbr_to_num[date_time_month]).zfill(2)}-{date_time_day} {date_time_time}"
+    date_time_hour, date_time_minutes, date_time_seconds = date_time_time.split(':')
+    d = datetime(year=int(date_time_year), month=abbr_to_num[date_time_month], day=int(date_time_day), hour=int(date_time_hour), minute=int(date_time_minutes), second=int(date_time_seconds))
+    d_offset = timedelta(minutes=int(values[3]))
+    local_time = d + d_offset
+    string_values = f"{values[0]},{int(values[1],16)},{date_time_string},{values[3]},{str(local_time)}"
     return string_values
 
 def get_columns_Checkins():
-    cols = "userId,venueId,utcTime,utcOffset"
+    cols = "userId,venueId,utcTime,utcOffset,localDatetime"
     return cols
 
 def post_insert_Venues():
@@ -52,7 +59,7 @@ def post_insert_Venues():
             "ALTER TABLE Venues ADD SPATIAL INDEX(latlon);"]
 
 def post_insert_Checkins():
-    return "ALTER TABLE Checkins ADD FOREIGN KEY (venueId) REFERENCES Venues(id);"
+    return ["ALTER TABLE Checkins ADD FOREIGN KEY (venueId) REFERENCES Venues(id);"]
 
 
 table_name = sys.argv[1]

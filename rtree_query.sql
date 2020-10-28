@@ -30,3 +30,5 @@ CALL AssignCities();
 SELECT Count(id) FROM Venues WHERE assignedCity IS NOT NULL;
 select routine_name from information_schema.routines where routine_type = 'PROCEDURE';
 
+-- POWER BI JOIN ALL TABLES QUERY TODO: Change SELECT * to make the columns have readable names
+SELECT * FROM Checkins LEFT JOIN Venues ON Checkins.venueId = Venues.id LEFT JOIN Cities ON Cities.id = Venues.assignedCity LEFT JOIN Countries ON Countries.code = Cities.countryCode WHERE Venues.assignedCity IS NOT NULL;

@@ -22,6 +22,7 @@ create_columns = {
                         "venueId BINARY(96) NOT NULL",
                         "utcTime DATETIME NOT NULL",
                         "utcOffset SMALLINT NOT NULL",
+                        "localDatetime DATETIME NOT NULL",
                         "PRIMARY KEY (id)"]}
 
 # Selected spatial point as data for lat lon because the indices make use of r-trees 
@@ -43,12 +44,17 @@ def post_insert_Venues():
             "ALTER TABLE Venues ADD SPATIAL INDEX(latlon);"]
 
 def insert_Checkins(values):
-    _, date_time_month, date_time_day, date_time_time, _, date_time_year = values[3].split(' ')
-    string_values = f"({values[0]},{int(values[1],16)},{date_time_year}-{abbr_to_num[date_time_month]}-{date_time_day} {date_time_time},{values[4]})"
+    _, date_time_month, date_time_day, date_time_time, _, date_time_year = values[2].split(' ')
+    date_time_string = f"{date_time_year}-{str(abbr_to_num[date_time_month]).zfill(2)}-{date_time_day} {date_time_time}"
+    date_time_hour, date_time_minutes, date_time_seconds = date_time_time.split(':')
+    d = datetime(year=int(date_time_year), month=abbr_to_num[date_time_month], day=int(date_time_day), hour=int(date_time_hour), minute=int(date_time_minutes), second=int(date_time_seconds))
+    d_offset = timedelta(minutes=int(values[3]))
+    local_time = d + d_offset
+    string_values = f"{values[0]},{int(values[1],16)},{date_time_string},{values[3]}"
     return string_values
 
 def start_insert_Checkins():
-    cols = "userId,venueId,utcTime,utcOffset"
+    cols = "userId,venueId,utcTime,utcOffset,localDatetime"
     query = f"INSERT INTO Checkins ({cols}) VALUES"
     return query
 
