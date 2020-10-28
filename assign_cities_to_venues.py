@@ -75,42 +75,46 @@ def create_call_assign_proc(distance):
     mysqldb_connection.commit()
     cursor.close()
 
-lines_in_file = 0
+def venues_unassigned():
+    cursor_null = mysqldb_connection.cursor()
+    cursor_null.execute(has_null_query)
+    number_of_null = cursor_null.fetchone()[0]
+    cursor_null.close()
+    return number_of_null
+
+distances_stack = []
 with open("data/sorted_distances.txt", 'r') as distances_file:
     for line in distances_file:
-        lines_in_file += 1
-granularity = 0.05
-with open("data/sorted_distances.txt", 'r') as distances_file:
-    for line in tqdm(range(lines_in_file)):
-        value = next(distances_file)
-        distance = float(value.rstrip())
-        cursor_null = mysqldb_connection.cursor()
-        cursor_null.execute(has_null_query)
-        number_of_null = cursor_null.fetchone()[0]
-        cursor_null.close()
-        if(number_of_null < 1):
-            break
-        duplicate_venues = [hex(1)]
-        i = 0
-        retries = 10
-        while (len(duplicate_venues) > 0):
-            dist = distance/(2 + (granularity*i))
-            duplicate_venues, amount_of_venues = create_call_test_proc(dist)
-            print(f"Step {i}")
-            print(f"{len(duplicate_venues)} ambiguous venue's cities left")
-            print(f"{amount_of_venues} venues within latlon distance: {dist}")
-            if amount_of_venues == 0:
-                if i == 0:
-                    break
-                granularity /= 2
-                print(f"Ambiguous city for venues. Changing granularity to {granularity}. Retries left: {retries}")
-                duplicate_venues = [hex(1)]*retries
-                retries -= 1
-            i += 1
-        if amount_of_venues > 0:
-            granularity = 0.05
-            create_call_assign_proc(dist)
+        distances_stack.append(float(line.rstrip()))
+    #distances_stack.append(float(0))
+
+i = 1
+while (True):
+    try:
+        distance = distances_stack.pop()
+    except:
+        break
+    if(venues_unassigned() < 1):
+        break
+
+    duplicate_venues, amount_of_venues = create_call_test_proc(distance)
+    print(f"Step {i}")
+    print(f"{len(duplicate_venues)} ambiguous venue's cities left")
+    print(f"{amount_of_venues} venues within latlon distance: {distance}")
+    if amount_of_venues > 0:
+        if len(duplicate_venues) == 0:
+            create_call_assign_proc(distance)
             print(f"{amount_of_venues} have been assigned to a city")
-        print("Moving to next distance")
-            
-    mysqldb_connection.close()
+            previous_distance = distance
+        else:
+            new_distance = (distance + previous_distance) / 2
+            print(f"Ambiguous city for venues. Adding distance to stack: {new_distance}")
+            distances_stack.append(distance)
+            distances_stack.append(new_distance)
+    else:
+        previous_distance = distance
+    print("Moving to next distance")
+    i += 1
+    
+        
+mysqldb_connection.close()

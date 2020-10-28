@@ -3,7 +3,7 @@ SELECT * FROM Venues AS v WHERE MBRContains (ST_Buffer(POINT(-15.615000,-56.0930
 
 DROP PROCEDURE IF EXISTS AssignCities;
 DELIMITER ;;
-USE Electronics;;
+USE assignment1;;
 CREATE PROCEDURE AssignCities()
 BEGIN
 DECLARE citiesAmount INT;

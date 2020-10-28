@@ -20,9 +20,9 @@ while (i < len(points)):
         distances.append([points[i][0], points[i][1], points[i][-1], points[j][0], points[j][1], points[j][-1], get_distance(points[i][-1], points[j][-1])])
         j += 1
     i += 1
-sorted_distances = sorted(distances, key=lambda x: x[-1])
+sorted_distances = sorted(distances, key=lambda x: x[-1], reverse=True)
 with open('data/sorted_cities_distances.txt','w') as out_cd_file:
     with open('data/sorted_distances.txt', 'w') as out_d_file:
-        for row in sorted_distances[:200:2]:
+        for row in sorted_distances[-200::2]:
             out_cd_file.write(str(row) + '\n')
             out_d_file.write(str(row[-1]) + '\n')
