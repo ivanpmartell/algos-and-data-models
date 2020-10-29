@@ -32,3 +32,27 @@ select routine_name from information_schema.routines where routine_type = 'PROCE
 
 -- POWER BI JOIN ALL TABLES QUERY TODO: Change SELECT * to make the columns have readable names
 SELECT * FROM Checkins LEFT JOIN Venues ON Checkins.venueId = Venues.id LEFT JOIN Cities ON Cities.id = Venues.assignedCity LEFT JOIN Countries ON Countries.code = Cities.countryCode WHERE Venues.assignedCity IS NOT NULL;
+
+SELECT Checkins.userId as CheckinUser,
+       Checkins.utcTime as CheckinUTCTime,
+       Checkins.utcOffset as CheckinUTCOffset,
+       Checkins.localDatetime as CheckinTime,
+       Venues.category as VenueCategory,
+       X(Venues.latlon) as VenueLatitude,
+       Y(Venues.latlon) as VenueLongitude,
+       Cities.name as City,
+       X(Cities.latlon) as CityLatitude,
+       Y(Cities.latlon) as CityLongitude,
+       Cities.isNationalCapital as isNationalCapital,
+       Cities.isProvincialCapital as isProvincialCapital,
+       Cities.isEnclave as isEnclave,
+       Countries.code as CountryCode,
+       Countries.name as Country
+FROM Checkins
+LEFT JOIN Venues
+ON Checkins.venueId = Venues.id
+LEFT JOIN Cities
+ON Cities.id = Venues.assignedCity
+LEFT JOIN Countries
+ON Countries.code = Cities.countryCode
+WHERE Venues.assignedCity IS NOT NULL;
