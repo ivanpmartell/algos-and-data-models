@@ -73,13 +73,14 @@ except ProgrammingError as e:
     print("Warning: " + e.msg)
 cursor.close()
 print("Creating file...")
-with open(out_path, 'a') as out_file:
+""" with open(out_path, 'a') as out_file:
     with open(file_path, 'r') as read_file:
         for i, line in enumerate(read_file):
-            if i > 99999:
-                break
             values = line.rstrip().split('\t')
-            out_file.write(locals()[f"insert_{table_name}"](values) +"\n")
+            try:
+                out_file.write(locals()[f"insert_{table_name}"](values) +"\n")
+            except:
+                print(f"Error in line {i}: {line}") """
 
 cursor = mysqldb_connection.cursor()
 cursor.execute("show variables like 'secure_file_priv';")

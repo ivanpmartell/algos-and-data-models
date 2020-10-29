@@ -114,6 +114,5 @@ while (True):
         previous_distance = distance
     print("Moving to next distance")
     i += 1
-    
         
 mysqldb_connection.close()
