@@ -1,0 +1,11 @@
+hops taken from town to town to reach (like the 7 person one in the world)
+hops taken from bank to bank
+
+amount of transactions
+trend on last day of month (mostly 31) statements & interest
+trend on 5-14 probably payment (deposit)
+trend 5-14 (withdraw) mostly on 12
+
+amount of money
+more withdrawals in jan more deposits in feb
+spike in june
