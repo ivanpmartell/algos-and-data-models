@@ -17,14 +17,14 @@ class AdjMatrix:
         self.n = len(unique_nodes)
         self.m = 0
         for idx, node in enumerate(unique_nodes):
-            n = int(node)
+            n = node
             self.nti[n] = idx
             self.itn[idx] = n
         self.mat = np.zeros((self.n,self.n))
 
     def add(self, nodeFrom, nodeTo, weight):
-        nF = int(nodeFrom)
-        nT = int(nodeTo)
+        nF = nodeFrom
+        nT = nodeTo
         self.mat[self.nti[nF], self.nti[nT]] = float(weight)
         self.m += 1
 
@@ -53,7 +53,8 @@ class AdjMatrix:
     def clustering_coefficient(self):
         triangles = 0
         triads = 0
-        for node in sorted(self.nti):
+        self.sort_matrix()
+        for node in self.nti:
             neighbors = self.get_neighbors(node)
             for v_idx, v_w in enumerate(neighbors):
                 if v_w == 0.0:
@@ -61,20 +62,46 @@ class AdjMatrix:
                 v = self.itn[v_idx]
                 if node < v:
                     v_neighbors = self.get_neighbors(v)
-                    connections = 0
                     for w_idx, w_w in enumerate(v_neighbors):
-                        connections += 1
                         if w_w == 0.0:
                             continue
                         w = self.itn[w_idx]
                         if v < w:
-                            triangles += 1
-                        else:
-                            triads += 1
-                    if connections == 0:
-                        triads += 1
+                            connections = 0
+                            for i in range(v_idx+1, len(neighbors)):
+                                if neighbors[i] == 0.0:
+                                    continue
+                                connections += 1
+                                if self.itn[i] == w:
+                                    triangles += 1
+                                else:
+                                    triads += 1
+                            if connections == 0:
+                                triads += 1
         ts = 3*triangles
-        return ts/(ts+triads)
+        try:
+            result = ts/(ts+triads)
+        except ZeroDivisionError:
+            result = 0
+        return result
+
+    def sort_matrix(self):
+        sorted_nodes = sorted(self.nti.keys())
+        temp_mat = np.zeros((self.n,self.n))
+        temp_nti = dict()
+        temp_itn = dict()
+        for node_idx, node in enumerate(sorted_nodes):
+            temp_nti[node] = node_idx
+            temp_itn[node_idx] = node
+        for node_idx, node in enumerate(sorted_nodes):
+            for idx, n_w in enumerate(self.get_neighbors(node)):
+                if n_w == 0.0:
+                    continue
+                neighbor_idx = temp_nti[self.itn[idx]]
+                temp_mat[node_idx,neighbor_idx] = n_w
+        self.mat = temp_mat
+        self.nti = temp_nti
+        self.itn = temp_itn
     
     def average_path_length(self):
         costs = 0
@@ -85,10 +112,8 @@ class AdjMatrix:
     
     def BFS(self, source):
         visited = {}
-        for n_idx, n_w in enumerate(self.get_neighbors(source)):
-            if n_w == 0.0:
-                continue
-            visited[self.itn[n_idx]] = False
+        for n in self.nti.keys():
+            visited[n] = False
         visited[source] = True
         pq = PriorityQueue()
         pq.put((0, source))

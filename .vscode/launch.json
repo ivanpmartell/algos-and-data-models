@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args" : ["assignment2/data/amount by account_id and account_to.csv"],
+            "args" : ["assignment2/data/test_data.csv"],
             "console": "integratedTerminal"
         }
     ]

@@ -14,8 +14,8 @@ class AdjList:
         self.n = self.m = 0
 
     def add(self, nodeFrom, nodeTo, weight):
-        nF = int(nodeFrom)
-        nT = int(nodeTo)
+        nF = nodeFrom
+        nT = nodeTo
         w = float(weight)
         self.addNode(nF)
         self.addNode(nT)
@@ -51,22 +51,34 @@ class AdjList:
     def clustering_coefficient(self):
         triangles = 0
         triads = 0
+        self.sort_list()
         for node in sorted(self.adj):
             neighbors = self.get_neighbors(node)
-            for v, _ in neighbors:
+            for idx, v_e in enumerate(neighbors):
+                v, _ = v_e
                 if node < v:
                     v_neighbors = self.get_neighbors(v)
-                    connections = 0.0
                     for w, _ in v_neighbors:
-                        connections += 1
                         if v < w:
-                            triangles += 1
-                        else:
-                            triads += 1
-                    if connections == 0:
-                        triads += 1
+                            connections = 0
+                            for i in range(idx+1, len(neighbors)):
+                                connections += 1
+                                if neighbors[i][0] == w:
+                                    triangles += 1
+                                else:
+                                    triads += 1
+                            if connections == 0:
+                                triads += 1
         ts = 3*triangles
-        return ts/(ts+triads)
+        try:
+            result = ts/(ts+triads)
+        except ZeroDivisionError:
+            result = 0
+        return result
+    
+    def sort_list(self):
+        for node in self.adj.copy():
+            self.adj[node] = sorted(self.adj[node])
     
     def average_path_length(self):
         costs = 0
@@ -77,7 +89,7 @@ class AdjList:
     
     def BFS(self, source):
         visited = {}
-        for n, _ in self.get_neighbors(source):
+        for n in self.adj.keys():
             visited[n] = False
         visited[source] = True
         pq = PriorityQueue()
