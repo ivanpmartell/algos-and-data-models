@@ -64,15 +64,20 @@ class EdgeList:
         triads = 0
         self.sort_list()
         for node in sorted(self.get_nodes()):
+            levels = [0,0,0,0]
+            levels[0] += 1
             neighbors = self.get_neighbors(node)
             for idx, v_e in enumerate(neighbors):
+                levels[1] += 1
                 v, _ = v_e
                 if node < v:
                     v_neighbors = self.get_neighbors(v)
                     for w, _ in v_neighbors:
+                        levels[2] += 1
                         if v < w:
                             connections = 0
                             for i in range(idx+1, len(neighbors)):
+                                levels[3] += 1
                                 connections += 1
                                 if neighbors[i][0] == w:
                                     triangles += 1
@@ -116,8 +121,8 @@ class EdgeList:
 
 in_file = sys.argv[1]
 
-df = pd.read_csv(in_file, names=["from", "to", "weight"])
-df = df[df.groupby('to').to.transform(len) > 1]
+df = pd.read_csv(in_file, names=["from", "to", "weight"], skiprows=1)
+#df = df[df.groupby('to').to.transform(len) > 1]
 model = EdgeList()
 for idx, row in df.iterrows():
     model.add(row["from"], row["to"], row["weight"])

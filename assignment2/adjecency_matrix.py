@@ -55,20 +55,25 @@ class AdjMatrix:
         triads = 0
         self.sort_matrix()
         for node in self.nti:
+            levels = [0,0,0,0]
+            levels[0] += 1
             neighbors = self.get_neighbors(node)
             for v_idx, v_w in enumerate(neighbors):
+                levels[1] += 1
                 if v_w == 0.0:
                     continue
                 v = self.itn[v_idx]
                 if node < v:
                     v_neighbors = self.get_neighbors(v)
                     for w_idx, w_w in enumerate(v_neighbors):
+                        levels[2] += 1
                         if w_w == 0.0:
                             continue
                         w = self.itn[w_idx]
                         if v < w:
                             connections = 0
                             for i in range(v_idx+1, len(neighbors)):
+                                levels[3] += 1
                                 if neighbors[i] == 0.0:
                                     continue
                                 connections += 1
@@ -132,8 +137,8 @@ class AdjMatrix:
 
 in_file = sys.argv[1]
 
-df = pd.read_csv(in_file, names=["from", "to", "weight"])
-df = df[df.groupby('to').to.transform(len) > 1]
+df = pd.read_csv(in_file, names=["from", "to", "weight"], skiprows=1)
+#df = df[df.groupby('to').to.transform(len) > 1]
 model = AdjMatrix(df)
 for idx, row in df.iterrows():
     model.add(row["from"], row["to"], row["weight"])
