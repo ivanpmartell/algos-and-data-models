@@ -1,5 +1,5 @@
+from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
 import pandas as pd
 from os import path
 import glob
@@ -14,22 +14,14 @@ concatenated_df = concatenated_df[~concatenated_df.account_category.str.startswi
 #concatenated_df['content'] = concatenated_df['content'].str.findall('\w{2,}').str.join(' ')
 concatenated_df['content'] = concatenated_df['content'].astype(str)
 
-print("Fitting tfidf")
 vec = TfidfVectorizer(stop_words="english", ngram_range=(1,3))
 vec.fit(concatenated_df.content.values)
 features = vec.transform(concatenated_df.content.values)
-
-print("Doing KMeans")
-#For each type 'RightTroll' 'Fearmonger' 'Unknown' 'NewsFeed' 'LeftTroll' 'HashtagGamer' 'Commercial'
-clust = KMeans(init='k-means++', n_clusters=7, n_init=10)
-clust.fit(features)
-
-print("Getting clusters into pandas")
-yhat = clust.predict(features)
-concatenated_df['cluster_lbl'] = clust.labels_
+cosine_sim = cosine_similarity(features)
+concatenated_df['cos_sim'] = cosine_sim
 
 print("Writing file")
-with open("clustering_results.csv", 'w') as analysis_file:
+with open("similarity_results.csv", 'w') as analysis_file:
     for _, row in concatenated_df.iterrows():
         tweet_id = row['tweet_id']
-        analysis_file.write(f"{tweet_id},{row['cluster_lbl']}\n")
+        analysis_file.write(f"{tweet_id},{row['cos_sim']}\n")
